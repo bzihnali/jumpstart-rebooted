@@ -12,6 +12,9 @@ load_dotenv(dotenv_path=".env", override=True)
 app = Flask(__name__)
 client = WebClient(token=os.environ["SLACK_TOKEN"]) # Client for data retrieval from Slack
 
+# Preloads usergroups to prevent overuse of Slack API
+usergroups = client.usergroups_list(token=os.environ["SLACK_TOKEN"])['usergroups'] 
+
 """
 Main page, what the client should see
 """
@@ -25,7 +28,6 @@ announcements channel.
 """
 @app.route("/get_latest_announcement", methods=["GET"])
 def getLatestAnnouncement():
-    # TODO: Get the most recent message from Slack
     if(request.method == 'GET'):
         channel_name = "announcements"
         conversation_id = None
@@ -49,11 +51,11 @@ def getLatestAnnouncement():
                 channel=conversation_id,
                 inclusive=True,
                 oldest="0",
-                limit=1
+                limit=3
             )
 
             # Get the first message in results (the most recent) and return it as JSON
-            message = result["messages"][0]
+            message = result["messages"][2]
             return jsonify(message)
         except Exception as e:
             print(f"Error: {e}")
@@ -94,7 +96,35 @@ def parseLatestAnnouncement():
         # client.usergroups_list(token=os.environ["SLACK_TOKEN"])['usergroups']
         # returns a list of subgroups with keys id (hex value) and handle (@active, @frosh, etc.)
 
-    return messageToParse.json['blocks'][0]['elements']
+    for block in messageToParse.json['blocks']:
+        if 'elements' in block:
+            parseElementList(block['elements'])
+        
+    return messageToParse
+
+# TODO: Change this to return a built string
+def parseElementList(elementList : list):
+    for element in elementList:
+        if "elements" in element:
+            parseElementList(element["elements"])
+        else:
+            if "style" in element:
+                parseStyleList(element["style"])
+            match element['type']:
+                case "usergroup":
+                    print("USERGROUP - \'@" + 
+                          usergroups[next(i for i, usergroup in enumerate(usergroups) if usergroup['id'] == element["usergroup_id"])]["handle"]
+                        + "\'")
+                case "text":
+                    print("TEXT - \'" + element["text"] + "\'")
+                case "link":
+                    print("URL - \'" + element["url"] + "\'")
+                case _:
+                    print("NYI - \'" + element['type'] + "\'")
+
+def parseStyleList(styleDict : dict):
+    for key in styleDict.keys():
+        print(key + " style detected for following block")
 
 @app.route("/get_events", methods=["GET"])
 def getEvents():
