@@ -51,11 +51,11 @@ def getLatestAnnouncement():
                 channel=conversation_id,
                 inclusive=True,
                 oldest="0",
-                limit=3
+                limit=1
             )
 
             # Get the first message in results (the most recent) and return it as JSON
-            message = result["messages"][2]
+            message = result["messages"][0]
             return jsonify(message)
         except Exception as e:
             print(f"Error: {e}")
@@ -96,35 +96,60 @@ def parseLatestAnnouncement():
         # client.usergroups_list(token=os.environ["SLACK_TOKEN"])['usergroups']
         # returns a list of subgroups with keys id (hex value) and handle (@active, @frosh, etc.)
 
+    message = ""
+
     for block in messageToParse.json['blocks']:
-        if 'elements' in block:
-            parseElementList(block['elements'])
-        
-    return messageToParse
+        print(block)
+        if "elements" in block:
+            message += parseElementList(block['elements'])
+
+    print(message)
+    return message
 
 # TODO: Change this to return a built string
-def parseElementList(elementList : list):
+def parseElementList(elementList : list, htmlString : str = ""):
     for element in elementList:
         if "elements" in element:
-            parseElementList(element["elements"])
+            htmlString += parseElementList(element["elements"])
         else:
-            if "style" in element:
-                parseStyleList(element["style"])
-            match element['type']:
-                case "usergroup":
-                    print("USERGROUP - \'@" + 
-                          usergroups[next(i for i, usergroup in enumerate(usergroups) if usergroup['id'] == element["usergroup_id"])]["handle"]
-                        + "\'")
-                case "text":
-                    print("TEXT - \'" + element["text"] + "\'")
-                case "link":
-                    print("URL - \'" + element["url"] + "\'")
-                case _:
-                    print("NYI - \'" + element['type'] + "\'")
+            #print(buildHTMLfromElement(element))
+            htmlString += buildHTMLfromElement(element)
+
+    return htmlString
 
 def parseStyleList(styleDict : dict):
+    html = "style=\""
     for key in styleDict.keys():
-        print(key + " style detected for following block")
+        html += f"{key}: true"
+
+    html += "\""
+        
+
+def buildHTMLfromElement(element : dict):
+    html = ""
+    styleHTML = ""
+
+    if "style" in element:
+        styleHTML = " " + parseStyleList(element['style'])
+    
+    match element['type']:
+        case "usergroup":
+            html += (f"<span class=\"usergroup\"{styleHTML}>@" + 
+                    usergroups[next(i for i, usergroup in enumerate(usergroups) if usergroup['id'] == element["usergroup_id"])]["handle"]
+                 + "</span>")
+        case "user":
+            html += (f"<span class=\"user\" {styleHTML}>@" + 
+                     client.users_info(token=os.environ["SLACK_TOKEN"], user=element["user_id"])["user"]["real_name"] + 
+                     "</span>")
+        case "text":
+            html += element["text"]
+        case "link":
+            html += f"<a href=\"{element["url"]}\">\'" + element["url"] + "</a>"
+        case _:
+            print("NYI - \'" + element['type'] + "\'")
+    
+    return html
+        
 
 @app.route("/get_events", methods=["GET"])
 def getEvents():
