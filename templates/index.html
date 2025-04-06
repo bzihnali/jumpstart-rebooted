@@ -35,6 +35,13 @@
 
 		<div id="weather-holder">
 			<script>
+				let titleColor = "00c679";
+				let backgroundColor = "9ee4bb";
+				let analogousColor = "57e09c";
+				let analogousColor2 = "57e09c";
+				let accentColor = "bbebcf9e";
+				let textColor = "007300";
+
 				// Function to update the text and link
 				async function updateText() {
 					var textElement = document.getElementById('weather-holder');
@@ -44,9 +51,9 @@
 						previousSunStatus = await checkIfSunUp();
 
 						if (previousSunStatus) {
-							linkElement.href = "{{ url_for('static', filename='light-theme.css') }}";
+							setTheme("#00c679", "#9ee4bb", "#57e09c", "#57e09c", "#bbebcf9e", "#007300");
 						} else {
-							linkElement.href = "{{ url_for('static', filename='dark-theme.css') }}";
+							setTheme("#021a0a", "#032710", "#032810", "#02210d", "#00210ecc", "#00b661");
 						}
 
 						if (previousSunStatus) {
@@ -166,6 +173,15 @@
 		return formattedDateTime;
 	}
 
+	async function setTheme(titleColor, backgroundColor, analogousColor, analogousColor2, accentColor, textColor) {
+		document.documentElement.style.setProperty("--title-color", titleColor);
+		document.documentElement.style.setProperty("--background-color", backgroundColor);
+		document.documentElement.style.setProperty("--analogous-color", analogousColor);
+		document.documentElement.style.setProperty("--analogous-color-2", analogousColor2);
+		document.documentElement.style.setProperty("--accent-color", accentColor);
+		document.documentElement.style.setProperty("--text-color", textColor);
+	}
+
 	async function updateEvents() {
 		// Update the div content with the formatted date and time
 		const datetimeDiv = document.getElementById("datetime");
@@ -238,7 +254,6 @@
 				announcementDiv.innerHTML = "<div id=\"announcer\"><strong>" + json.sender_name + "</strong></div>" + json.message_text;
 				announcementReactionDiv.innerHTML = json.reactions;
 				announcementTimestampDiv.innerHTML = json.timestamp;
-
 			});
 	}
 

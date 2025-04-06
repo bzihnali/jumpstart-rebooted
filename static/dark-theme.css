@@ -175,6 +175,7 @@ body {
 
 #weather-and-announcements {
 	position: relative;
+	width: 40vw;
 	transform: translate(5px, 83px);
 }
 
@@ -220,17 +221,22 @@ body {
 	padding-left: 10px
 }
 
+#events-container {
+	width: 60vh;
+}
+
 #events-wrapper {
+	width: 60vh;
 	padding: 5px;
 	display: flex;
 	flex-flow: column wrap;
-	height: 84vh;
+	height: calc(84vh - 20px);
 	z-index: 0;
 	background-color: var(--analogous-color);
 }
 
 .event {
-	max-width: 282px;
+	width: calc(30vh - 42px);
 	max-height: 200px;
 	flex: 1 1 100px;
 	color: var(--text-color);

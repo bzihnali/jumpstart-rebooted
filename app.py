@@ -14,7 +14,7 @@ client = WebClient(token=os.environ["SLACK_TOKEN"]) # Client for data retrieval 
 
 
 # Preloads data to prevent overuse of Slack API
-usergroups = client.usergroups_list(token=os.environ["SLACK_TOKEN"])['usergroups'] 
+usergroups = client.usergroups_list(token=os.environ["SLACK_TOKEN"])['usergroups']
 emojis = client.emoji_list(token=os.environ["SLACK_TOKEN"], full=True)["emoji"]
 
 """
@@ -192,6 +192,13 @@ def buildHTMLfromElement(element : dict):
             html += element["text"]
         case "link":
             html += f"<a href=\"{element["url"]}\">\'" + element["url"] + "</a>"
+        case "emoji":
+            if element['name'] in emojis and "alias" not in element['name']:
+                html += f"<img class=\"emoji-inline\" src=\"{emojis[element['name']]}\"></img>"
+            elif element['name'].replace("alias:", "") in emojis:
+                html += f"<img class=\"emoji-inline\" src=\"{emojis[element['name'].replace('alias:', '')]}\"></img>"
+            else:
+                html += emoji_data_python.replace_colons(f":{element["name"]}:")
         case _:
             print(f"NYI - \'{element['type']}\' - {element}")
     
